@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore")
 data_folder = "C:/Users/Barbf/OneDrive/Documents/andy/ANZ/proj8/data/NODC"
 data_folder = data_folder.replace( "\\", "/" ) # change any backslashes to forwardslashes
 exemplar = "NDBC_41001_202101_D4_v00.nc" # File to use as the 'standard' format file
-MAX_FILES_TO_RUN = 20
+MAX_FILES_TO_RUN = 5
 
 def main():
     _,_,files = next(os.walk(data_folder))
@@ -34,7 +34,10 @@ def main():
 
 def analyse_fields_order(fields, exemplar_fields):
     exemplar_fields_order = OrderedDict(zip(exemplar_fields, range(1,1+len(exemplar_fields))))
-   
+    
+    print('\t'.join(['Dataset', '#Standard', '#MatchStandard', 'OrderDeviations',
+                                 'AvgDeviation', '#Missing', '#NonStandard', '#Fields']))
+    
     for ds in fields:
         ds_fields = fields[ds]
         ds_fields_order = OrderedDict(zip(ds_fields, range(1,1+len(ds_fields))))
@@ -56,7 +59,7 @@ def analyse_fields_order(fields, exemplar_fields):
         ds_dev_per_match = round(ds_total_deviation/num_matching, 1)
 
         print('\t'.join(map(str,[ds, len(exemplar_fields), num_matching, ds_total_deviation,
-                                 ds_dev_per_match, ex_fi_notIn_ds, len(ds_fi_nonex)])))
+                                 ds_dev_per_match, ex_fi_notIn_ds, len(ds_fi_nonex), len(ds_fields)])))
 
 
 def analyse_fields(fields, exemplar_fields, is_exemplar):
@@ -76,12 +79,14 @@ def analyse_fields(fields, exemplar_fields, is_exemplar):
             new_counts[ds][varname] += 1
     exemplar_fields_set = set(exemplar_fields)
     
+    if not is_exemplar:
+        print('\t'.join(['Dataset', '#Fields', '#Standard', '%Standard']))
     for ds in new_fields:  # ds stands for dataset(name)
         ds_fields_set = set(new_fields[ds])
         num_desired   = len(exemplar_fields_set.intersection(ds_fields_set))
         perc_desired  = round(100*num_desired/len(exemplar_fields_set), 1)
         if not is_exemplar:
-            print( ds, len(new_fields[ds]) , num_desired, str(perc_desired)+"%")
+            print( '\t'.join([ds, str(len(new_fields[ds])) , str(num_desired), str(perc_desired)+"%"]))
     return new_fields, new_counts
 
 def convert_netCDF_file_to_csv(data_folder, ds):
