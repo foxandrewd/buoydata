@@ -12,25 +12,41 @@ import warnings
 from collections import OrderedDict, defaultdict
 warnings.filterwarnings("ignore")
 
-data_folder = "C:/Users/Barbf/OneDrive/Documents/andy/ANZ/proj8/data/NODC"
+data_folder = "B:\\ftp\\nodc.noaa"
 data_folder = data_folder.replace( "\\", "/" ) # change any backslashes to forwardslashes
 exemplar = "NDBC_41001_202101_D4_v00.nc" # File to use as the 'standard' format file
-MAX_FILES_TO_RUN = 5
+MAX_FILES_TO_RUN = 200
 
 def main():
-    _,_,files = next(os.walk(data_folder))
-    fields = {}
-    exemplar_fields_raw = {}
-    exemplar_fields_raw[exemplar] = convert_netCDF_file_to_csv(data_folder, exemplar)
-    exemplar_fields = analyse_fields(exemplar_fields_raw, exemplar_fields_raw, True)[0][exemplar]
-    
-    for ds in files[:MAX_FILES_TO_RUN]:
-        curr_fields = convert_netCDF_file_to_csv(data_folder, ds)
-        fields[ds] = curr_fields[:]
-        
-    new_fields,new_counts = analyse_fields(fields, exemplar_fields, False)
-    print()
-    analyse_fields_order(new_fields, exemplar_fields)
+    for root,_,files in os.walk(".", topdown=False):
+        for name in files:
+            #print(os.path.join(root, name))
+        #print(files)
+            #_,_,files = next(os.walk(data_folder,topdown=False))
+            #print(files,os.walk(data_folder,topdown=False))
+            fields = {}
+            exemplar_fields_raw = {}
+            exemplar_fields_raw[exemplar] = convert_netCDF_file_to_csv(data_folder, exemplar)
+            exemplar_fields = analyse_fields(exemplar_fields_raw, exemplar_fields_raw, True)[0][exemplar]
+            t_count=[0,0]
+
+            for ds in files:#[:MAX_FILES_TO_RUN]:
+                t_count[0]+=1
+                if ds.endswith(".nc"):
+                    t_count[1]+=1
+                    ds=root+"/"+ds
+                    ds=ds.replace("\\","/")
+                    ds=ds.replace(".nc","~nc")
+                    ds=ds.replace(".","")
+                    ds=ds.replace("~nc",".nc")
+                    print(files,ds)
+                    curr_fields = convert_netCDF_file_to_csv(data_folder, ds)
+                    fields[ds] = curr_fields[:]
+                
+            new_fields,new_counts = analyse_fields(fields, exemplar_fields, False)
+            print(fields,t_count)
+            analyse_fields_order(new_fields, exemplar_fields)
+    input("press any key to continue...")
 
 def analyse_fields_order(fields, exemplar_fields):
     exemplar_fields_order = OrderedDict(zip(exemplar_fields, range(1,1+len(exemplar_fields))))
@@ -90,7 +106,10 @@ def analyse_fields(fields, exemplar_fields, is_exemplar):
     return new_fields, new_counts
 
 def convert_netCDF_file_to_csv(data_folder, ds):
-    x = Dataset(data_folder + "/" + ds, "r", format="NETCDF4")
+    print(data_folder,ds)
+    y=data_folder + "/" + ds
+    y=y.replace("//","/")
+    x = Dataset(y, "r", format="NETCDF4")
     times = x['time'][:]
     colnames = ['base0.base1.datetime']
     fields_1 = OrderedDict();  fields_1['datetime.1'] = 1;
@@ -137,9 +156,12 @@ def convert_netCDF_file_to_csv(data_folder, ds):
                 except: pass
     
     # Save data to CSV file format in subdirectory 'csv/' in the data folder:
-    outfileName = ds.replace(".nc",".csv")
+    dh=ds.replace("/","-")
+    outfileName = dh.replace(".nc",".csv")
     if not os.path.isdir(data_folder+"/csv"): os.mkdir(data_folder+"/csv")
-    df.to_csv(data_folder + "/csv/" + outfileName)
+    yf=data_folder + "/csv/" + outfileName
+    yf=yf.replace("//","/")
+    df.to_csv(yf)
     
     return colnames
 
