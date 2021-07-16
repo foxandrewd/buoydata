@@ -17,6 +17,7 @@ import datetime as dt
 
 data_folder = "./data"
 exemplar = "NDBC_41001_202101_D4_v00.nc" # File to use as the 'standard' format file
+
 MAX_FILES_TO_RUN = 1
 
 def main():
@@ -32,13 +33,12 @@ def main():
             fields[ds] = curr_fields[:]
             
     new_fields,new_counts = analyse_fields(fields, exemplar_fields, False)
-    print()
     analyse_fields_order(new_fields, exemplar_fields)
 
 def analyse_fields_order(fields, exemplar_fields):
     exemplar_fields_order = OrderedDict(zip(exemplar_fields, range(1,1+len(exemplar_fields))))
     
-    print('\t'.join(['Dataset', '#Standard', '#MatchStandard', 'OrderDeviations',
+    print('\n'+'\t'.join(['Dataset', '#Standard', '#MatchStandard', 'OrderDeviations',
                                  'AvgDeviation', '#Missing', '#NonStandard', '#Fields']))
     
     for ds in fields:
@@ -140,7 +140,6 @@ def convert_netCDF_file_to_csv(data_folder, ds):
         except:
             print("Err_1: ", var, len(vardata))
             #print(vardata)
-            #print(type(vardata))
             pass
 
     df['time.1'] = times
