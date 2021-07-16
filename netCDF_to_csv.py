@@ -15,13 +15,13 @@ from collections import OrderedDict, defaultdict
 warnings.filterwarnings("ignore")
 import datetime as dt
 
-data_folder = "./data"
+data_folder = "data"
 exemplar = "NDBC_41001_202101_D4_v00.nc" # File to use as the 'standard' format file
 
 MAX_FILES_TO_RUN = 1
 
 def main():
-    _,_,files = next(os.walk(data_folder))
+    (_,_,files) = next(os.walk(data_folder+'/NDBC'))
     fields = {}
     exemplar_fields_raw = {}
     exemplar_fields_raw[exemplar] = convert_netCDF_file_to_csv(data_folder, exemplar)
