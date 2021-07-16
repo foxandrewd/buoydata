@@ -95,7 +95,7 @@ def analyse_fields(fields, exemplar_fields, is_exemplar):
 
 def convert_netCDF_file_to_csv(data_folder, ds):
     outfileName = ds.replace(".nc",".csv")
-    x = Dataset(data_folder + "/" + ds, "r", format="NETCDF4")
+    x = Dataset(data_folder + "/NDBC/" + ds, "r", format="NETCDF4")
     times = x['time'][:]
     colnames = ['base0.base1.datetime']
     fields_1 = OrderedDict();  fields_1['datetime.1'] = True
