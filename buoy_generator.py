@@ -126,8 +126,6 @@ def datagen(data_folder, dsname):
 
     start_dt = dt.datetime(year, month, 1, 0, 0, 0, tzinfo=dt.timezone.utc)
     start_ts = int(dt.datetime.timestamp(start_dt))
-    
-    
     end_dt = dt.datetime(year, month, lastday, 23, 0, 0, tzinfo=dt.timezone.utc)
     end_ts = int(dt.datetime.timestamp(end_dt))
     
