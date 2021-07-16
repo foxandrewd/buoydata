@@ -9,7 +9,7 @@ import numpy as np
 import random as rnd
 import datetime as dt
 
-data_folder = "./data"
+data_folder = "data"
 exemplar = "NDBC_41001_202101_D4_v00.nc" # File to use as the 'standard' format file
 
 MAX_FILES_TO_RUN = 1
@@ -18,10 +18,10 @@ MAX_FILES_TO_RUN = 1
 C_MonthLength = [0,31,28,31,30,31,30,31,31,30,31,30,31]
 
 def main():
-    (_,_,files) = next(os.walk(data_folder))
+    (_,_,files) = next(os.walk(data_folder+'/csv'))
     
     for ds in files[:MAX_FILES_TO_RUN]:
-        if ds.endswith(".nc"):
+        if ds.endswith(".csv"):
             run_analysis( data_folder, ds)
             datagen(      data_folder, ds)
 
