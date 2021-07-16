@@ -132,8 +132,6 @@ def datagen(data_folder, dsname):
     end_ts = int(dt.datetime.timestamp(end_dt))
     
     for col in df['FieldName']:
-        minx  = df['Min'][col]
-        maxx  = df['Max'][col]
         mu    = df['Mean'][col]
         sigma = df['StdDev'][col]
 
@@ -141,7 +139,7 @@ def datagen(data_folder, dsname):
         if col[:dot].endswith("_qc"):  is_qc_field = True
         else:  is_qc_field = False
         
-        if  (is_qc_field == True): #Make QC type of data from its distribution
+        if  (is_qc_field == True):   #Make QC type of data from its distribution
             outdata[col] = sampleN_data_dist(N, df['Distrib'][col])
         elif(is_qc_field == False): #Create a normally-distributed random list of values with mean=mu and StdDev=sigma:
             outdata[col] = pd.Series([rnd.normalvariate(mu,sigma) for i in range(N)])
@@ -159,17 +157,8 @@ def datagen(data_folder, dsname):
     outdata.index.name = ''
     
     if not os.path.isdir(data_folder + "/simdata"): os.mkdir(data_folder + "/simdata")
-    outdata.to_csv(data_folder + "/simdata/" + csvname)
-    
-    print(outdata)
-    print(start_dt)
-    print(end_dt)
-    print(year)
-    print(month)
-    print(lastday)
-    print(start_ts)
-    print(end_ts)
-    print(outdata)
+    outdata.to_csv(data_folder + "/simdata/" + "sim_" + csvname)
+
 
 if __name__ == "__main__":
     main()
