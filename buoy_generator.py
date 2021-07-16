@@ -20,7 +20,7 @@ C_MonthLength = [0,31,28,31,30,31,30,31,31,30,31,30,31]
 def main():
     (_,_,files) = next(os.walk(data_folder))
     
-    for ds in [:MAX_FILES_TO_RUN]:
+    for ds in files[:MAX_FILES_TO_RUN]:
         if ds.endswith(".nc"):
             run_analysis( data_folder, ds)
             datagen(      data_folder, ds)
