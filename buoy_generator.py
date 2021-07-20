@@ -11,6 +11,8 @@ import datetime as dt
 import re
 
 data_folder = "data"
+csv_folder = data_folder + '/' + 'csv'
+analysis_folder = data_folder + '/' + 'analysis'
 sim_folder = data_folder + '/' + 'simdata'
 MAX_FILES_TO_RUN = 2
 
@@ -22,21 +24,20 @@ C_MonthLength = [0,31,28,31,30,31,30,31,31,30,31,30,31]
 
 
 def main():
-    (_,_,files) = next(os.walk(data_folder+'/csv'))
+    (_,_,files) = next(os.walk(csv_folder))
     
-    for ds in files[:MAX_FILES_TO_RUN]:
-        if ds.endswith(".csv"):
-            run_analysis(data_folder, ds)
+    for fname in files[:MAX_FILES_TO_RUN]:
+        if fname.endswith(".csv"):
+            run_analysis(data_folder, fname)
 
             # Generate simulated data for all output years nd months:
             for year in OUTPUT_YEARS:
                 for month in OUTPUT_MONTHS:
-                    datagen(data_folder, ds, year, month)
+                    datagen(data_folder, fname, year, month)
 
 
-def run_analysis(data_folder, dsname):
-    csvname = dsname.replace(".nc",".csv")
-    df = pd.read_csv(data_folder + "/csv/" + csvname, index_col=0)
+def run_analysis(data_folder, fname):
+    df = pd.read_csv(data_folder + "/csv/" + fname, index_col=0)
     
     outcolumns = ['FieldName','DataType','Min','Max','Mean','StdDev','Median','Mode',
                   'NumValues','NumNulls','NumUnique','AutoCorr','FFT','Distrib']
@@ -102,8 +103,8 @@ def run_analysis(data_folder, dsname):
         else:
             dfout['FFT'][col] = 'NA'
 
-    if not os.path.isdir(data_folder + "/analysis"): os.mkdir(data_folder + "/analysis")
-    dfout.to_csv(data_folder + "/analysis/analysis_" + csvname)
+    os.makedirs(analysis_folder, exist_ok=True)
+    dfout.to_csv(analysis_folder + '/' + "analysis_" + fname)
     
 def sampleN_data_dist(N, dist):
     dist = yaml.load(dist)
@@ -119,10 +120,9 @@ def sample_from_dist(dist):
         runningsum += probability
     return dist.keys()[-1]
 
-def datagen(data_folder, dsname, year, month):
+def datagen(data_folder, fname, year, month):
     months = [str(m).zfill(2) for m in range(1,12+1)]
-    csvname = dsname.replace(".nc",".csv")
-    df = pd.read_csv(data_folder + "/analysis/analysis_" + csvname, index_col=0)
+    df = pd.read_csv(data_folder + "/analysis/analysis_" + fname, index_col=0)
     cols = list(df['FieldName'])    
     outdata = pd.DataFrame(columns=cols)
     
@@ -165,11 +165,9 @@ def datagen(data_folder, dsname, year, month):
     outdata.index = outdata['time.1']
     outdata.index.name = ''
     
-    yrmon = str(year)+str(month).zfill(2) # e.g. 200507
-    
-    m = re.search("_[0-9]{6}", csvname)  # e.g.find '_200507' in the csvname
-    
-    output_name = csvname.replace(m[0], "_"+yrmon) # Replace old date with new (yrmon)
+    yrmon = str(year)+str(month).zfill(2) # e.g. '202501'
+    m = re.search("_[0-9]{6}", fname)  # e.g.find '_200507' in the csvname
+    output_name = fname.replace(m[0], "_"+yrmon) # Replace old date with new (yrmon)
     
     os.makedirs(sim_folder, exist_ok=True)
     outdata.to_csv( sim_folder + '/' + "sim_" + output_name)
