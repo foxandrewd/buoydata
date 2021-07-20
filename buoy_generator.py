@@ -8,22 +8,30 @@ import pandas as pd
 import numpy as np
 import random as rnd
 import datetime as dt
+import re
 
 data_folder = "data"
-exemplar = "NDBC_41001_202101_D4_v00.nc" # File to use as the 'standard' format file
+sim_folder = data_folder + '/' + 'simdata'
+MAX_FILES_TO_RUN = 2
 
-MAX_FILES_TO_RUN = 1
+OUTPUT_YEARS = [2022]
+OUTPUT_MONTHS = [1,2,3,4,5,6]
 
 # Zero'th month doesn't exist:
 C_MonthLength = [0,31,28,31,30,31,30,31,31,30,31,30,31]
+
 
 def main():
     (_,_,files) = next(os.walk(data_folder+'/csv'))
     
     for ds in files[:MAX_FILES_TO_RUN]:
         if ds.endswith(".csv"):
-            run_analysis( data_folder, ds)
-            datagen(      data_folder, ds)
+            run_analysis(data_folder, ds)
+
+            # Generate simulated data for all output years nd months:
+            for year in OUTPUT_YEARS:
+                for month in OUTPUT_MONTHS:
+                    datagen(data_folder, ds, year, month)
 
 
 def run_analysis(data_folder, dsname):
@@ -88,7 +96,7 @@ def run_analysis(data_folder, dsname):
             xsmoothed = np.interp(xi, xi[mask], x[mask])
             fftvals = np.abs(np.fft.rfft(xsmoothed))
             fftfreq = np.fft.rfftfreq(n=len(x), d=time_gap_hours)
-            maxval_position = fftvals.argmax() # pd.Series(fftvals).idxmax()
+            maxval_position = fftvals.argmax()
             maxval_freq = fftfreq[maxval_position]
             dfout['FFT'][col] = 1/maxval_freq
         else:
@@ -111,7 +119,8 @@ def sample_from_dist(dist):
         runningsum += probability
     return dist.keys()[-1]
 
-def datagen(data_folder, dsname):
+def datagen(data_folder, dsname, year, month):
+    months = [str(m).zfill(2) for m in range(1,12+1)]
     csvname = dsname.replace(".nc",".csv")
     df = pd.read_csv(data_folder + "/analysis/analysis_" + csvname, index_col=0)
     cols = list(df['FieldName'])    
@@ -119,8 +128,10 @@ def datagen(data_folder, dsname):
     
     start_ts = int(df['Min']['time.1'])
     start_dt = dt.datetime.utcfromtimestamp(start_ts)
-    year  = start_dt.year
-    month = start_dt.month
+    
+    #year  = start_dt.year
+    #month = start_dt.month
+    
     lastday = C_MonthLength[month]
     N = 24 * lastday      # We sample every day, once for each hour
 
@@ -128,7 +139,7 @@ def datagen(data_folder, dsname):
     start_ts = int(dt.datetime.timestamp(start_dt))
     end_dt = dt.datetime(year, month, lastday, 23, 0, 0, tzinfo=dt.timezone.utc)
     end_ts = int(dt.datetime.timestamp(end_dt))
-    
+
     for col in df['FieldName']:
         mu    = df['Mean'][col]
         sigma = df['StdDev'][col]
@@ -154,8 +165,14 @@ def datagen(data_folder, dsname):
     outdata.index = outdata['time.1']
     outdata.index.name = ''
     
-    if not os.path.isdir(data_folder + "/simdata"): os.mkdir(data_folder + "/simdata")
-    outdata.to_csv(data_folder + "/simdata/" + "sim_" + csvname)
+    yrmon = str(year)+str(month).zfill(2) # e.g. 200507
+    
+    m = re.search("_[0-9]{6}", csvname)  # e.g.find '_200507' in the csvname
+    
+    output_name = csvname.replace(m[0], "_"+yrmon) # Replace old date with new (yrmon)
+    
+    os.makedirs(sim_folder, exist_ok=True)
+    outdata.to_csv( sim_folder + '/' + "sim_" + output_name)
 
 
 if __name__ == "__main__":
