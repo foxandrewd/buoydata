@@ -1,0 +1,15 @@
+---
+base_folder: C:/Users/Barbf/Downloads/cmanwx
+BASIS_YEAR: '2020'
+BASIS_MONTH: '01'
+MAX_FILES_TO_RUN: 1
+OUTPUT_YEARS:
+- '2025'
+OUTPUT_MONTHS:
+- '01'
+- '02'
+- '03'
+MonthLength:
+  '01': 31
+  '02': 28
+  '03': 31
