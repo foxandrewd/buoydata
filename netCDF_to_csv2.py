@@ -18,14 +18,14 @@ import datetime as dt
 
 data_folder = "C:/Users/Barbf/Downloads/cmanwx"
 
-MAX_FILES_TO_RUN = 2
+MAX_FILES_TO_RUN = 4
 C_year = '2021'
 
 
 def main():
     (_,yeardirs,yearfiles) = next(os.walk(data_folder+'/'+C_year))
 
-    for month in ['05']: # yeardirs:
+    for month in yeardirs:
         monthFolder = data_folder+'/'+C_year+'/'+month
         (_,_,files) = next(os.walk(monthFolder))
     
