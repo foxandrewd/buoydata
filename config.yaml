@@ -34,3 +34,18 @@ MonthLength:
 - 31
 - 30
 - 31
+statscolumns:
+- FieldName
+- DataType
+- Min
+- Max
+- Mean
+- StdDev
+- Median
+- Mode
+- NumValues
+- NumNulls
+- NumUnique
+- AutoCorr
+- FFT
+- Distrib
