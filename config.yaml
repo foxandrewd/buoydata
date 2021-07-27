@@ -1,4 +1,23 @@
 ---
+#  \//||\/||
+#  // ||  ||__
+---
+GUI:
+  Theme:
+    Background:     0x555555
+    Forground:      0x888888
+    Highlights:     0xaaaaaa
+    text:           0xdddddd
+  Dimensions:
+    x:
+    y:
+  Position:
+    x:
+    y:
+  Defaults:
+    Dark theme: True
+History:
+---
 BASE_FOLDER: C:/Users/Barbf/Downloads/cmanwx
 BASIS_YEAR: '2020'
 BASIS_MONTH: '10'
