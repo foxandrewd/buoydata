@@ -15,6 +15,11 @@ GUI:
     y:
   Defaults:
     Dark theme: True
+---
+Presets:
+  preset1:
+  preset2:
+  preset3:
 History:
 ---
 BASE_FOLDER: C:/Users/Barbf/Downloads/cmanwx
