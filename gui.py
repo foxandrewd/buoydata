@@ -4,6 +4,8 @@ import os, sys, yaml, io
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import filedialog
+import buoy_generator as BG
+
 
 #  ---
 
@@ -44,8 +46,11 @@ class app_GUI:
 
 def chooseCSVFile(event=None):
     global fname, fnameVar
-    filename = filedialog.askopenfilename(initialdir=os.getcwd(), \
-                            title = "Select CSV file",filetypes = (("CSV files","*.csv"),("All files","*.*")))
+    
+    BASE_DIR_CHOOSE = "C:/Users/Barbf/Downloads/cmanwx"
+    
+    filename = filedialog.askopenfilename(initialdir=BASE_DIR_CHOOSE, \
+                        title = "Select CSV file",filetypes = (("CSV files","*.csv"),("All files","*.*")))
     print('Selected:', filename)
     
     fname = filename
@@ -53,18 +58,57 @@ def chooseCSVFile(event=None):
     fnameVar.set(fname)
     return filename
 
+def runDataGenerator():
+    params = {}
+    
+    yrstxt = output_years.get()
+    yrsarr = yrstxt.split('-')
+    outyears_fixed = list(range( int(yrsarr[0]) , int(yrsarr[1])+1   ))
+    params['outyears'] = outyears_fixed
+
+    monstxt = output_months.get()
+    monsarr = monstxt.split('-')
+    outmonths_fixed = list(range( int(monsarr[0]) , int(monsarr[1])+1   ))
+    params['outmonths'] = outmonths_fixed
+
+    basis_fname = fnameVar.get()
+    basis_fname = basis_fname[:basis_fname.rindex('/')]   # Chop off last bit #1
+    
+    basis_fname = basis_fname[:basis_fname.rindex('/')]     # Chop off last bit #2
+    basis_month = basis_fname[(basis_fname.rindex('/')+1):]   # Last bit is now 'month'
+    print('month: ', basis_month)
+    params['basismonth'] = basis_month
+
+    basis_fname = basis_fname[:basis_fname.rindex('/')]     # Chop off last bit #3
+    basis_year = basis_fname[(basis_fname.rindex('/')+1):]    # Last bit is now 'month'
+    print('year: ', basis_year)
+    params['basisyear'] = basis_year
+    basis_fname = basis_fname[:basis_fname.rindex('/')]     # Chop off last bit #4
+    params['basisfolder'] = basis_fname                     # We're now down to the folder before year and month
+    params['numbuoys'] = int(num_buoys.get())
+    params['simprefix'] = sim_prefix.get().rstrip('_')
+    params['datafreqinhours'] = int(data_freq.get())
+
+    # Finally, run the data generation    
+    BG.main(params)
+    
+    # Show finished
+    tk.messagebox.showinfo(message="Data Generation Complete.")
+
+
 #  ---
 if __name__== "__main__":
     root = tk.Tk()
     
     root.title("Data Generator")
     
-    mainFrame = tk.Frame(root)
+    global fname
+    fname = ""
+    global fnameVar
+    fnameVar = tk.StringVar()
     
-    global fname; fname = ""
-    global fnameVar; fnameVar = tk.StringVar()
     num_buoys = tk.StringVar()
-    num_buoys.set("20")
+    num_buoys.set("10")
     
     csv_folder = tk.StringVar()
     csv_folder.set("csv")
@@ -83,6 +127,7 @@ if __name__== "__main__":
 
     l = tk.Label(root, text="NDBC Buoy Data Generator", \
                        font = "sans 16 bold")
+    mainFrame = tk.Frame(root)
     
     l.pack()
     mainFrame.pack()
@@ -99,10 +144,8 @@ if __name__== "__main__":
     L2 = tk.Label(mainFrame, text="CSV Folder Name:", font = "sans 10 bold")
     E2 = tk.Entry(mainFrame, width=40, textvariable = csv_folder)
     
-    
     L3 = tk.Label(mainFrame, text="Simdata Filename Prefix:", font = "sans 10 bold")
     E3 = tk.Entry(mainFrame, width=40, textvariable = sim_prefix)
-    
     
     L4 = tk.Label(mainFrame, text="Data Freq in Hours:", font = "sans 10 bold")
     E4 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = data_freq, from_=1, to=24)
@@ -113,8 +156,8 @@ if __name__== "__main__":
     L6 = tk.Label(mainFrame, text="Output Months (start-end):", font = "sans 10 bold")
     E6 = tk.Entry(mainFrame, width=40, textvariable = output_months)
 
-    B7 = tk.Button(mainFrame, text="Generate Data", command = None, \
-                               font = "sans 12 bold")
+    B7 = tk.Button(mainFrame, text="Generate Data", command = runDataGenerator, \
+                              font = "sans 12 bold")
     
     L0.grid(row=0, column=0)
     E0.grid(row=0, column=1); B0.grid(row=0, column=2)
