@@ -46,21 +46,26 @@ class app_GUI:
 
 def chooseCSVFile(event=None):
     global fname, fnameVar
+    
     BASE_DIR_CHOOSE = "C:/Users/Barbf/Downloads/cmanwx"
-    filename = filedialog.askopenfilename(initialdir = os.getcwd(),  ### initialdir=BASE_DIR_CHOOSE,
+    
+    filename = filedialog.askopenfilename(initialdir = os.getcwd(), ##### BASE_DIR_CHOOSE,
                  title = "Select CSV file",
                  filetypes = (("CSV files","*.csv"),("All files","*.*")))
     print('Selected:', filename)
+    
     fname = filename
+    
     fnameVar.set(fname)
     return filename
 
 def runDataGenerator():
     params = {}
+    
     yrstxt = output_years.get()
     if '-' in yrstxt:
-        yrsarr = yrstxt.split('-')
-        outyears_fixed = list(range( int(yrsarr[0]) , int(yrsarr[1])+1   ))
+        yrsarr = [int(yr) for yr in yrstxt.split('-')]
+        outyears_fixed = list(range( min(yrsarr) , max(yrsarr)+1   ))
     else:
         outyears_fixed = [int(yrstxt)]
     params['outyears'] = outyears_fixed
@@ -98,6 +103,7 @@ def runDataGenerator():
 #  ---
 if __name__== "__main__":
     root = tk.Tk()
+    
     root.title("Buoy Data Generator")
     
     global fname
@@ -123,7 +129,7 @@ if __name__== "__main__":
     output_months = tk.StringVar()
     output_months.set("1-12")
 
-    l = tk.Label(root, text="NDBC Buoy Data Generator", \
+    wintitle = tk.Label(root, text=" "*12+"NDBC Buoy Data Generator:", \
                        font = "sans 15 bold")
     mainFrame = tk.Frame(root)
     
@@ -131,8 +137,8 @@ if __name__== "__main__":
                      "6 Hours", "8 Hours", "12 Hours", 
                      "24 Hours")
     
-    l.pack()
-    mainFrame.pack()
+    wintitle.grid(row=0, column=0, sticky="w")
+    mainFrame.grid(row=1, column=0)
     
     s = ttk.Style()
     s.configure('my.TButton', font=('Sans', 10, 'bold'))
