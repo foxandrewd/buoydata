@@ -46,22 +46,17 @@ class app_GUI:
 
 def chooseCSVFile(event=None):
     global fname, fnameVar
-    
     BASE_DIR_CHOOSE = "C:/Users/Barbf/Downloads/cmanwx"
-    
-    filename = filedialog.askopenfilename(initialdir = BASE_DIR_CHOOSE,
+    filename = filedialog.askopenfilename(initialdir = os.getcwd(),  ### initialdir=BASE_DIR_CHOOSE,
                  title = "Select CSV file",
                  filetypes = (("CSV files","*.csv"),("All files","*.*")))
     print('Selected:', filename)
-    
     fname = filename
-    
     fnameVar.set(fname)
     return filename
 
 def runDataGenerator():
     params = {}
-    
     yrstxt = output_years.get()
     if '-' in yrstxt:
         yrsarr = yrstxt.split('-')
@@ -103,7 +98,6 @@ def runDataGenerator():
 #  ---
 if __name__== "__main__":
     root = tk.Tk()
-    
     root.title("Buoy Data Generator")
     
     global fname
@@ -121,7 +115,7 @@ if __name__== "__main__":
     sim_prefix.set("simdata_")
 
     data_freq = tk.StringVar()
-    data_freq.set("1")
+    data_freq.set("1 Hour")
 
     output_years = tk.StringVar()
     output_years.set("2022-2025")
@@ -129,7 +123,8 @@ if __name__== "__main__":
     output_months = tk.StringVar()
     output_months.set("1-12")
 
-    l = tk.Label(root, text="NDBC Buoy Data Generator", font = "sans 15 bold")
+    l = tk.Label(root, text="NDBC Buoy Data Generator", \
+                       font = "sans 15 bold")
     mainFrame = tk.Frame(root)
     
     freqs_allowed = ("1 Hour", "2 Hours", "4 Hours",
@@ -139,14 +134,17 @@ if __name__== "__main__":
     l.pack()
     mainFrame.pack()
     
+    s = ttk.Style()
+    s.configure('my.TButton', font=('Sans', 10, 'bold'))
+    
     L0 = tk.Label(mainFrame, text="Basis/Example CSV File:", font = "sans 10 bold")
     E0 = tk.Entry(mainFrame, width=54, textvariable=fnameVar)
-    B0 = tk.Button(mainFrame, text="Select Basis CSV File", command = chooseCSVFile,
-                              font = "sans 10 bold")
+    B0 = ttk.Button(mainFrame, text="Select Basis CSV File", command = chooseCSVFile,
+                    style='my.TButton') #, font = "sans 10 bold")
     
     
     L1 = tk.Label(mainFrame, text="# Buoys to Generate:", font = "sans 10 bold")
-    E1 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=15, textvariable = num_buoys, from_=1, to=1e7)
+    E1 = ttk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = num_buoys, from_=1, to=1e7)
 
     L2 = tk.Label(mainFrame, text="CSV Folder Name:", font = "sans 10 bold")
     E2 = tk.Entry(mainFrame, width=40, textvariable = csv_folder)
@@ -155,7 +153,7 @@ if __name__== "__main__":
     E3 = tk.Entry(mainFrame, width=40, textvariable = sim_prefix)
     
     L4 = tk.Label(mainFrame, text="Data Frequency (Hrs):", font = "sans 10 bold")
-    E4 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=15, textvariable = data_freq,
+    E4 = ttk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = data_freq,
                         values = freqs_allowed )
 
     L5 = tk.Label(mainFrame, text="Output Years: start-end", font = "sans 10 bold")
@@ -166,8 +164,11 @@ if __name__== "__main__":
 
     L7 = tk.Label(mainFrame, text="    ", font = "sans 2")
 
-    B8 = tk.Button(mainFrame, text="Generate Buoy Data", command = runDataGenerator,
-                              font = "sans 11 bold")
+    s2 = ttk.Style()
+    s2.configure('my2.TButton', font=('Sans', 11, 'bold'))
+
+    B8 = ttk.Button(mainFrame, text="Generate Buoy Data", command = runDataGenerator,
+                              style = 'my2.TButton') ###font = "sans 11 bold")
 
     L9 = tk.Label(mainFrame, text="    ", font = "sans 2")
         
