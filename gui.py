@@ -49,8 +49,9 @@ def chooseCSVFile(event=None):
     
     BASE_DIR_CHOOSE = "C:/Users/Barbf/Downloads/cmanwx"
     
-    filename = filedialog.askopenfilename(initialdir=BASE_DIR_CHOOSE, \
-                        title = "Select CSV file",filetypes = (("CSV files","*.csv"),("All files","*.*")))
+    filename = filedialog.askopenfilename(initialdir = BASE_DIR_CHOOSE,
+                 title = "Select CSV file",
+                 filetypes = (("CSV files","*.csv"),("All files","*.*")))
     print('Selected:', filename)
     
     fname = filename
@@ -62,8 +63,11 @@ def runDataGenerator():
     params = {}
     
     yrstxt = output_years.get()
-    yrsarr = yrstxt.split('-')
-    outyears_fixed = list(range( int(yrsarr[0]) , int(yrsarr[1])+1   ))
+    if '-' in yrstxt:
+        yrsarr = yrstxt.split('-')
+        outyears_fixed = list(range( int(yrsarr[0]) , int(yrsarr[1])+1   ))
+    else:
+        outyears_fixed = [int(yrstxt)]
     params['outyears'] = outyears_fixed
 
     monstxt = output_months.get()
@@ -87,20 +91,20 @@ def runDataGenerator():
     params['basisfolder'] = basis_fname                     # We're now down to the folder before year and month
     params['numbuoys'] = int(num_buoys.get())
     params['simprefix'] = sim_prefix.get().rstrip('_')
-    params['datafreqinhours'] = int(data_freq.get())
+    params['datafreqinhours'] = int(data_freq.get().split(" ")[0]) # Integer value before the space char
 
     # Finally, run the data generation    
     BG.main(params)
     
     # Show finished
-    tk.messagebox.showinfo(message="Data Generation Complete.")
+    tk.messagebox.showinfo(message="Data Generation is Complete.")
 
 
 #  ---
 if __name__== "__main__":
     root = tk.Tk()
     
-    root.title("Data Generator")
+    root.title("Buoy Data Generator")
     
     global fname
     fname = ""
@@ -108,7 +112,7 @@ if __name__== "__main__":
     fnameVar = tk.StringVar()
     
     num_buoys = tk.StringVar()
-    num_buoys.set("10")
+    num_buoys.set("2")
     
     csv_folder = tk.StringVar()
     csv_folder.set("csv")
@@ -125,21 +129,24 @@ if __name__== "__main__":
     output_months = tk.StringVar()
     output_months.set("1-12")
 
-    l = tk.Label(root, text="NDBC Buoy Data Generator", \
-                       font = "sans 16 bold")
+    l = tk.Label(root, text="NDBC Buoy Data Generator", font = "sans 15 bold")
     mainFrame = tk.Frame(root)
+    
+    freqs_allowed = ("1 Hour", "2 Hours", "4 Hours",
+                     "6 Hours", "8 Hours", "12 Hours", 
+                     "24 Hours")
     
     l.pack()
     mainFrame.pack()
     
     L0 = tk.Label(mainFrame, text="Basis/Example CSV File:", font = "sans 10 bold")
-    E0 = tk.Entry(mainFrame, width=60, textvariable=fnameVar)
-    B0 = tk.Button(mainFrame, text="Select Basis CSV File", command = chooseCSVFile, \
-                               font = "sans 10 bold")
+    E0 = tk.Entry(mainFrame, width=54, textvariable=fnameVar)
+    B0 = tk.Button(mainFrame, text="Select Basis CSV File", command = chooseCSVFile,
+                              font = "sans 10 bold")
     
     
-    L1 = tk.Label(mainFrame, text="Num. of Buoys to Run:", font = "sans 10 bold")
-    E1 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = num_buoys, from_=1, to=999999)
+    L1 = tk.Label(mainFrame, text="# Buoys to Generate:", font = "sans 10 bold")
+    E1 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=15, textvariable = num_buoys, from_=1, to=1e7)
 
     L2 = tk.Label(mainFrame, text="CSV Folder Name:", font = "sans 10 bold")
     E2 = tk.Entry(mainFrame, width=40, textvariable = csv_folder)
@@ -147,18 +154,23 @@ if __name__== "__main__":
     L3 = tk.Label(mainFrame, text="Simdata Filename Prefix:", font = "sans 10 bold")
     E3 = tk.Entry(mainFrame, width=40, textvariable = sim_prefix)
     
-    L4 = tk.Label(mainFrame, text="Data Freq in Hours:", font = "sans 10 bold")
-    E4 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = data_freq, from_=1, to=24)
+    L4 = tk.Label(mainFrame, text="Data Frequency (Hrs):", font = "sans 10 bold")
+    E4 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=15, textvariable = data_freq,
+                        values = freqs_allowed )
 
-    L5 = tk.Label(mainFrame, text="Output Years (start-end):", font = "sans 10 bold")
+    L5 = tk.Label(mainFrame, text="Output Years: start-end", font = "sans 10 bold")
     E5 = tk.Entry(mainFrame, width=40, textvariable = output_years)
 
-    L6 = tk.Label(mainFrame, text="Output Months (start-end):", font = "sans 10 bold")
+    L6 = tk.Label(mainFrame, text="Output Months: start-end", font = "sans 10 bold")
     E6 = tk.Entry(mainFrame, width=40, textvariable = output_months)
 
-    B7 = tk.Button(mainFrame, text="Generate Data", command = runDataGenerator, \
-                              font = "sans 12 bold")
-    
+    L7 = tk.Label(mainFrame, text="    ", font = "sans 2")
+
+    B8 = tk.Button(mainFrame, text="Generate Buoy Data", command = runDataGenerator,
+                              font = "sans 11 bold")
+
+    L9 = tk.Label(mainFrame, text="    ", font = "sans 2")
+        
     L0.grid(row=0, column=0)
     E0.grid(row=0, column=1); B0.grid(row=0, column=2)
     
@@ -179,7 +191,9 @@ if __name__== "__main__":
 
     L6.grid(row=6, column=0)
     E6.grid(row=6, column=1)    
- 
-    B7.grid(row=7, column=1)
+
+    L7.grid(row=7, column=0) 
+    B8.grid(row=8, column=1)
+    L9.grid(row=9, column=0)
 
     root.mainloop()
