@@ -145,7 +145,7 @@ if __name__== "__main__":
     
     L0 = tk.Label(mainFrame, text="Basis/Example CSV File:", font = "sans 10 bold")
     E0 = tk.Entry(mainFrame, width=54, textvariable=fnameVar)
-    B0 = ttk.Button(mainFrame, text="Select Basis CSV File", command = chooseCSVFile,
+    B0 = ttk.Button(mainFrame, text="Load", command = chooseCSVFile,
                     style='my.TButton') #, font = "sans 10 bold")
     
     
