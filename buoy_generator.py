@@ -3,7 +3,7 @@ Created on: August 13, 2021
 @author: Andrew Fox
 """
 
-import os, yaml
+import os, sys, yaml
 import pandas as pd
 import numpy as np
 import random as rnd
@@ -16,7 +16,8 @@ base_folder = 'C:/Users/Barbf/Downloads/cmanwx'
 BASIS_YEAR = '2020'
 BASIS_MONTH = '01'
 MAX_FILES_TO_RUN = 1
-SIM_PREFIX = 'sim'
+CSV_FOLDER = 'csv'
+SIM_PREFIX = 'simdata'
 OUTPUT_YEARS = [2022]
 OUTPUT_MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12]
 DATA_FREQ_IN_HOURS = 1
@@ -36,16 +37,17 @@ def extract_buoy_names(fnames):
 
 def main(params):
     
-    global base_folder, BASIS_YEAR, BASIS_MONTH, MAX_FILES_TO_RUN
+    global base_folder, BASIS_YEAR, BASIS_MONTH, MAX_FILES_TO_RUN, CSV_FOLDER
     global SIM_PREFIX, OUTPUT_YEARS, OUTPUT_MONTHS, DATA_FREQ_IN_HOURS
 
-    OUTPUT_YEARS = params['outyears']
-    OUTPUT_MONTHS = params['outmonths']
-    BASIS_YEAR = params['basisyear']
-    BASIS_MONTH = params['basismonth']
-    base_folder = params['basisfolder']
-    MAX_FILES_TO_RUN = params['numbuoys']
-    SIM_PREFIX = params['simprefix']
+    OUTPUT_YEARS       = params['outyears']
+    OUTPUT_MONTHS      = params['outmonths']
+    BASIS_YEAR         = params['basisyear']
+    BASIS_MONTH        = params['basismonth']
+    base_folder        = params['basisfolder']
+    MAX_FILES_TO_RUN   = params['numbuoys']
+    CSV_FOLDER         = params['csvfolder']
+    SIM_PREFIX         = params['simprefix']
     DATA_FREQ_IN_HOURS = params['datafreqinhours']
 
     print('\n 0 base_folder:', base_folder)
@@ -57,7 +59,7 @@ def main(params):
 
     for month in OUTPUT_MONTHS:
         mon = str(month).zfill(2)
-        try: (_,_,files) = next(os.walk('/'.join([base_folder, BASIS_YEAR, mon, 'csv'])))
+        try: (_,_,files) = next(os.walk('/'.join([base_folder, BASIS_YEAR, mon, CSV_FOLDER])))
         except: continue
         buoyfiles = list(extract_buoy_names(files).values())
         for fname in buoyfiles[:MAX_FILES_TO_RUN]:
@@ -67,7 +69,7 @@ def main(params):
     for year in OUTPUT_YEARS:
         for month in OUTPUT_MONTHS:
             mon = str(month).zfill(2)
-            try: (_,_,files) = next(os.walk('/'.join([base_folder, BASIS_YEAR, mon, 'csv'])))                    
+            try: (_,_,files) = next(os.walk('/'.join([base_folder, BASIS_YEAR, mon, CSV_FOLDER])))                    
             except: continue            
             buoyfiles = list(extract_buoy_names(files).values())
             for fname in buoyfiles[:MAX_FILES_TO_RUN]:
@@ -79,7 +81,7 @@ def main(params):
     final_yr_dir_raw = r'{}'.format(final_yr_dir_bslash)
     os.system(r'explorer ' + final_yr_dir_raw)
 
-                    
+
 def run_analysis(basis_yr, fname, year, month):
     yr = str(year)
     mon = str(month).zfill(2)
@@ -94,7 +96,7 @@ def run_analysis(basis_yr, fname, year, month):
     else:
         print('Analysing: ', yr, mon, fname_to_buoyname(fname))
     
-    df = pd.read_csv('/'.join([base_folder, yr, mon, 'csv', fname]), index_col=0)
+    df = pd.read_csv('/'.join([base_folder, yr, mon, CSV_FOLDER, fname]), index_col=0)
     outcolumns = ["FieldName","DataType","Min","Max","Mean","StdDev","Median","Mode",
                   "NumValues","NumNulls","NumUnique","AutoCorr","FFT","Distrib"]
     dfout = pd.DataFrame(index=df.columns, columns = outcolumns)
@@ -191,10 +193,9 @@ def fname_to_buoyname(fname):
     if newname.startswith('sim_'):
         newname = newname[4:]      # Remove 'sim_' from the start of the name
     if newname.startswith('NDBC_'):
-        newname = newname[5:]      # Remove 'NDBC_' from the start of the name
-    
-    uscore = newname.index('_')
-    buoyname = newname[:uscore]
+        newname = newname[5:]      # Remove 'NDBC_' from the start of the name    
+    uscore = newname.index('_')    # Position of the '_' char in newname
+    buoyname = newname[:uscore]    # Buoyname is before the '_' char
     return buoyname
 
 def datagen(basis_yr, fname, year, month):
@@ -216,7 +217,7 @@ def datagen(basis_yr, fname, year, month):
     start_dt = dt.datetime(year, month, 1, 0, 0, 0, tzinfo=dt.timezone.utc)
     start_ts = int(dt.datetime.timestamp(start_dt))
     
-    end_dt = dt.datetime(year, month, lastday, 23, 59, 57, tzinfo=dt.timezone.utc)
+    end_dt = dt.datetime(year, month, lastday, 23, 59, 58, tzinfo=dt.timezone.utc)
     end_ts = int(dt.datetime.timestamp(end_dt))
 
     for col in df['FieldName']:
@@ -227,10 +228,9 @@ def datagen(basis_yr, fname, year, month):
         if col[:dot].endswith("_qc"):  is_qc_field = True
         else:                          is_qc_field = False
         
-        if  (is_qc_field == True):   #Make QC type of data from its distribution
+        if is_qc_field: #Make QC type of data from its distribution
             outdata[col] = pd.Series(sampleN_data_dist(N, df['Distrib'][col]))
-            
-        elif(is_qc_field == False): #Create a normally-distributed random list of values with mean=mu and StdDev=sigma:
+        else:        #Create a normally-distributed random list of values with mean=mu and StdDev=sigma:
             outdata[col] = pd.Series([rnd.normalvariate(mu,sigma) for i in range(N)])
 
     time_diff = 3600 # The number of seconds in 1 hour (60 x 60)
@@ -238,6 +238,7 @@ def datagen(basis_yr, fname, year, month):
     times = [x for x in range(start_ts, end_ts+1, time_diff)] # Add 1 to end_ts cos of how range() works
     datetimes = [dt.datetime.utcfromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S') for t in times]
     
+    # Make the date/time fields
     outdata['datetime.1'] = pd.Series(datetimes)
     outdata['time.1']     = pd.Series(times)
     try: outdata['time_wpm_20.1'] = pd.Series(times)
@@ -248,7 +249,7 @@ def datagen(basis_yr, fname, year, month):
     outdata.index.name = buoyname
     
     output_fname = '_'.join([SIM_PREFIX, buoyname, yrmon ]) + ".csv"
-    output_folder = '/'.join([base_folder, yr, mon, 'csv'])
+    output_folder = '/'.join([base_folder, yr, mon, CSV_FOLDER])
     os.makedirs(output_folder, exist_ok=True)
     outdata.to_csv( output_folder + '/' + output_fname)
 
@@ -261,7 +262,7 @@ def datagen(basis_yr, fname, year, month):
     print('SIM_PREFIX:', SIM_PREFIX)
     print('DATA_FREQ_IN_HOURS:', DATA_FREQ_IN_HOURS)
     '''
-    print('Current year-month: ', yr + " - " + mon, 'Buoy:', buoyname)
+    print('Generated year-month: ', yr + " - " + mon, 'Buoy:', buoyname)
 
 
 if __name__ == "__main__":
