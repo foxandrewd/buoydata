@@ -60,8 +60,12 @@ def chooseCSVFile(event=None):
     return filename
 
 def runDataGenerator():
-    params = {}
     
+    if not os.path.isfile(fnameVar.get()):
+        tk.messagebox.showerror(message="Basis/Example CSV file not found.")
+        return
+    params = {}
+    # Set the parameters for data generation:
     yrstxt = output_years.get()
     if '-' in yrstxt:
         yrsarr = [int(yr) for yr in yrstxt.split('-')]
@@ -71,8 +75,11 @@ def runDataGenerator():
     params['outyears'] = outyears_fixed
 
     monstxt = output_months.get()
-    monsarr = monstxt.split('-')
-    outmonths_fixed = list(range( int(monsarr[0]) , int(monsarr[1])+1   ))
+    if '-' in monstxt:
+        monsarr = [int(mon) for mon in monstxt.split('-')]
+        outmonths_fixed = list(range( min(monsarr) , max(monsarr)+1   ))
+    else:
+        outmonths_fixed = [int(monstxt)]
     params['outmonths'] = outmonths_fixed
 
     basis_fname = fnameVar.get()
@@ -90,6 +97,7 @@ def runDataGenerator():
     basis_fname = basis_fname[:basis_fname.rindex('/')]     # Chop off last bit #4
     params['basisfolder'] = basis_fname                     # We're now down to the folder before year and month
     params['numbuoys'] = int(num_buoys.get())
+    params['csvfolder'] = csv_folder.get()
     params['simprefix'] = sim_prefix.get().rstrip('_')
     params['datafreqinhours'] = int(data_freq.get().split(" ")[0]) # Integer value before the space char
 
@@ -112,7 +120,7 @@ if __name__== "__main__":
     fnameVar = tk.StringVar()
     
     num_buoys = tk.StringVar()
-    num_buoys.set("2")
+    num_buoys.set("5")
     
     csv_folder = tk.StringVar()
     csv_folder.set("csv")
@@ -124,12 +132,12 @@ if __name__== "__main__":
     data_freq.set("1 Hour")
 
     output_years = tk.StringVar()
-    output_years.set("2022-2025")
+    output_years.set("2022-2024")
 
     output_months = tk.StringVar()
     output_months.set("1-12")
 
-    wintitle = tk.Label(root, text=" "*12+"NDBC Buoy Data Generator:", \
+    wintitle = tk.Label(root, text=12*" "+"NDBC Buoy Data Generator:", \
                        font = "sans 15 bold")
     mainFrame = tk.Frame(root)
     
