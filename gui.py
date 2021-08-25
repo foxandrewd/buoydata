@@ -4,6 +4,7 @@ import os, sys, yaml, io
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import filedialog
+import tkinter.messagebox
 import buoy_generator as BG
 
 
@@ -46,23 +47,18 @@ class app_GUI:
 
 def chooseCSVFile(event=None):
     global fname, fnameVar
-    
     BASE_DIR_CHOOSE = "C:/Users/Barbf/Downloads/cmanwx"
-    
     filename = filedialog.askopenfilename(initialdir = os.getcwd(), ##### BASE_DIR_CHOOSE,
                  title = "Select CSV file",
                  filetypes = (("CSV files","*.csv"),("All files","*.*")))
     print('Selected:', filename)
-    
     fname = filename
-    
     fnameVar.set(fname)
     return filename
 
 def runDataGenerator():
-    
     if not os.path.isfile(fnameVar.get()):
-        tk.messagebox.showerror(message="Basis/Example CSV file not found.")
+        tkinter.messagebox.showerror(message="Basis/Example CSV file not found.")
         return
     params = {}
     # Set the parameters for data generation:
@@ -87,8 +83,6 @@ def runDataGenerator():
     
     basis_fname = basis_fname[:basis_fname.rindex('/')]     # Chop off last bit #2
     basis_month = basis_fname[(basis_fname.rindex('/')+1):]   # Last bit is now 'month'
-    print('month: ', basis_month)
-    params['basismonth'] = basis_month
 
     basis_fname = basis_fname[:basis_fname.rindex('/')]     # Chop off last bit #3
     basis_year = basis_fname[(basis_fname.rindex('/')+1):]    # Last bit is now 'month'
@@ -105,7 +99,7 @@ def runDataGenerator():
     BG.main(params)
     
     # Show finished
-    tk.messagebox.showinfo(message="Data Generation is Complete.")
+    tkinter.messagebox.showinfo(message="Data Generation is Complete.")
 
 
 #  ---
@@ -132,7 +126,7 @@ if __name__== "__main__":
     data_freq.set("1 Hour")
 
     output_years = tk.StringVar()
-    output_years.set("2022-2024")
+    output_years.set("2022-2023")
 
     output_months = tk.StringVar()
     output_months.set("1-12")
