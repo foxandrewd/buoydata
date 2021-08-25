@@ -11,16 +11,23 @@ import datetime as dt
 import re
 import warnings
 warnings.filterwarnings("ignore")
+from multiprocessing import Pool
 
+'''
 base_folder = 'C:/Users/Barbf/Downloads/cmanwx'
 BASIS_YEAR = '2020'
-BASIS_MONTH = '01'
-MAX_FILES_TO_RUN = 1
+MAX_FILES_TO_RUN = 4
 CSV_FOLDER = 'csv'
 SIM_PREFIX = 'simdata'
 OUTPUT_YEARS = [2022]
 OUTPUT_MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12]
-DATA_FREQ_IN_HOURS = 1
+DATA_FREQ_IN_HOURS = 2
+'''
+
+#global base_folder, BASIS_YEAR, MAX_FILES_TO_RUN, CSV_FOLDER
+#global SIM_PREFIX, OUTPUT_YEARS, OUTPUT_MONTHS, DATA_FREQ_IN_HOURS
+
+
 # Zero'th month doesn't exist:
 C_MonthLength = [0,31,28,31,30,31,30,31,31,30,31,30,31]
 
@@ -35,15 +42,27 @@ def extract_buoy_names(fnames):
         else: continue
     return buoy_fnames
 
-def main(params):
-    
-    global base_folder, BASIS_YEAR, BASIS_MONTH, MAX_FILES_TO_RUN, CSV_FOLDER
+def pool_initializer(params):
+    global base_folder, BASIS_YEAR, MAX_FILES_TO_RUN, CSV_FOLDER
     global SIM_PREFIX, OUTPUT_YEARS, OUTPUT_MONTHS, DATA_FREQ_IN_HOURS
 
     OUTPUT_YEARS       = params['outyears']
     OUTPUT_MONTHS      = params['outmonths']
     BASIS_YEAR         = params['basisyear']
-    BASIS_MONTH        = params['basismonth']
+    base_folder        = params['basisfolder']
+    MAX_FILES_TO_RUN   = params['numbuoys']
+    CSV_FOLDER         = params['csvfolder']
+    SIM_PREFIX         = params['simprefix']
+    DATA_FREQ_IN_HOURS = params['datafreqinhours']
+
+def main(params):
+    
+    global base_folder, BASIS_YEAR, MAX_FILES_TO_RUN, CSV_FOLDER
+    global SIM_PREFIX, OUTPUT_YEARS, OUTPUT_MONTHS, DATA_FREQ_IN_HOURS
+
+    OUTPUT_YEARS       = params['outyears']
+    OUTPUT_MONTHS      = params['outmonths']
+    BASIS_YEAR         = params['basisyear']
     base_folder        = params['basisfolder']
     MAX_FILES_TO_RUN   = params['numbuoys']
     CSV_FOLDER         = params['csvfolder']
@@ -57,13 +76,23 @@ def main(params):
     print(' 0 SIM_PREFIX:', SIM_PREFIX)
     print(' 0 DATA_FREQ_IN_HOURS:', DATA_FREQ_IN_HOURS)
 
+    analysis_arguments = []
+    datagen_arguments = []    
+
     for month in OUTPUT_MONTHS:
         mon = str(month).zfill(2)
         try: (_,_,files) = next(os.walk('/'.join([base_folder, BASIS_YEAR, mon, CSV_FOLDER])))
         except: continue
         buoyfiles = list(extract_buoy_names(files).values())
         for fname in buoyfiles[:MAX_FILES_TO_RUN]:
-            run_analysis(BASIS_YEAR, fname, BASIS_YEAR, month)   # Year is always BASIS_YEAR for basis analysis
+            ### run_analysis(BASIS_YEAR, fname, BASIS_YEAR, month)   # Year is always BASIS_YEAR for basis analysis
+            analysis_arguments.append( (BASIS_YEAR, fname, BASIS_YEAR, month) )
+
+    pool_1 = Pool( processes=os.cpu_count(), 
+                   initializer=pool_initializer, 
+                   initargs=(params,) )
+    
+    pool_1.starmap(run_analysis, analysis_arguments)
     
     # Generate simulated data for all output years and months:
     for year in OUTPUT_YEARS:
@@ -73,7 +102,15 @@ def main(params):
             except: continue            
             buoyfiles = list(extract_buoy_names(files).values())
             for fname in buoyfiles[:MAX_FILES_TO_RUN]:
-                datagen(BASIS_YEAR, fname, year, month)
+                ### datagen(BASIS_YEAR, fname, year, month)
+                datagen_arguments.append( (BASIS_YEAR, fname, year, month) )
+
+    pool_2 = Pool( processes=os.cpu_count(), 
+                  initializer=pool_initializer, 
+                  initargs=(params,) )
+
+    pool_2.starmap( datagen , datagen_arguments )
+
 
     # Open File Explorer to show the final year of data generated:
     final_yr_dir = base_folder+"/"+str(year)
@@ -83,6 +120,10 @@ def main(params):
 
 
 def run_analysis(basis_yr, fname, year, month):
+
+    global base_folder, BASIS_YEAR, MAX_FILES_TO_RUN, CSV_FOLDER
+    global SIM_PREFIX, OUTPUT_YEARS, OUTPUT_MONTHS, DATA_FREQ_IN_HOURS
+
     yr = str(year)
     mon = str(month).zfill(2)
     yrmon = yr+mon # e.g. '202501'
@@ -91,10 +132,18 @@ def run_analysis(basis_yr, fname, year, month):
     analysis_fname = analysis_folder + '/' + "analysis_" + fname
 
     if os.path.isfile(analysis_fname):
-        print('Analysis already exists: ', yr, mon, fname_to_buoyname(fname))
+        print('Analysis already exists:', yr, mon, ", Buoy:", fname_to_buoyname(fname))
         return
     else:
-        print('Analysing: ', yr, mon, fname_to_buoyname(fname))
+        print('Analysing:', yr, mon, ", Buoy:", fname_to_buoyname(fname))
+
+    print('\n 1 base_folder:', base_folder)
+    print(' 1 MAX_FILES_TO_RUN:', MAX_FILES_TO_RUN)
+    print(' 1 OUTPUT_YEARS:', OUTPUT_YEARS)
+    print(' 1 OUTPUT_MONTHS:', OUTPUT_MONTHS)
+    print(' 1 SIM_PREFIX:', SIM_PREFIX)
+    print(' 1 DATA_FREQ_IN_HOURS:', DATA_FREQ_IN_HOURS)
+
     
     df = pd.read_csv('/'.join([base_folder, yr, mon, CSV_FOLDER, fname]), index_col=0)
     outcolumns = ["FieldName","DataType","Min","Max","Mean","StdDev","Median","Mode",
@@ -199,6 +248,10 @@ def fname_to_buoyname(fname):
     return buoyname
 
 def datagen(basis_yr, fname, year, month):
+
+    global base_folder, BASIS_YEAR, MAX_FILES_TO_RUN, CSV_FOLDER
+    global SIM_PREFIX, OUTPUT_YEARS, OUTPUT_MONTHS, DATA_FREQ_IN_HOURS
+
     yr = str(year)
     mon = str(month).zfill(2)
     yrmon = yr+mon # e.g. '202501'
@@ -244,6 +297,14 @@ def datagen(basis_yr, fname, year, month):
     try: outdata['time_wpm_20.1'] = pd.Series(times)
     except: pass
 
+    print('\n base_folder:', base_folder)
+    print(' MAX_FILES_TO_RUN:', MAX_FILES_TO_RUN)
+    print(' OUTPUT_YEARS:', OUTPUT_YEARS)
+    print(' OUTPUT_MONTHS:', OUTPUT_MONTHS)
+    print(' SIM_PREFIX:', SIM_PREFIX)
+    print(' DATA_FREQ_IN_HOURS:', DATA_FREQ_IN_HOURS)
+
+
     buoyname = fname_to_buoyname(fname)
     outdata.index = outdata['time.1']
     outdata.index.name = buoyname
@@ -253,16 +314,7 @@ def datagen(basis_yr, fname, year, month):
     os.makedirs(output_folder, exist_ok=True)
     outdata.to_csv( output_folder + '/' + output_fname)
 
-    '''
-    print()
-    print('base_folder:', base_folder)
-    print('MAX_FILES_TO_RUN:', MAX_FILES_TO_RUN)
-    print('OUTPUT_YEARS:', OUTPUT_YEARS)
-    print('OUTPUT_MONTHS:', OUTPUT_MONTHS)
-    print('SIM_PREFIX:', SIM_PREFIX)
-    print('DATA_FREQ_IN_HOURS:', DATA_FREQ_IN_HOURS)
-    '''
-    print('Generated year-month: ', yr + " - " + mon, 'Buoy:', buoyname)
+    print('Generating year-month: ', yr + " - " + mon, ', Buoy:', buoyname)
 
 
 if __name__ == "__main__":
