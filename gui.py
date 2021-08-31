@@ -152,7 +152,7 @@ if __name__== "__main__":
     
     
     L1 = tk.Label(mainFrame, text="# Buoys to Generate:", font = "sans 10 bold")
-    E1 = ttk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = num_buoys, from_=1, to=1e7)
+    E1 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = num_buoys, from_=1, to=1e7)
 
     L2 = tk.Label(mainFrame, text="CSV Folder Name:", font = "sans 10 bold")
     E2 = tk.Entry(mainFrame, width=40, textvariable = csv_folder)
@@ -161,7 +161,7 @@ if __name__== "__main__":
     E3 = tk.Entry(mainFrame, width=40, textvariable = sim_prefix)
     
     L4 = tk.Label(mainFrame, text="Data Frequency (Hrs):", font = "sans 10 bold")
-    E4 = ttk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = data_freq,
+    E4 = tk.Spinbox(mainFrame, justify=tk.CENTER, width=14, textvariable = data_freq,
                         values = freqs_allowed )
 
     L5 = tk.Label(mainFrame, text="Output Years: start-end", font = "sans 10 bold")
